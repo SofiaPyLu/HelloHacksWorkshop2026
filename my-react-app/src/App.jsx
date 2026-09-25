@@ -8,17 +8,38 @@ const types = [
   { name: 'Ground', color: 'bg-amber-100 text-amber-900 ring-amber-200' },
 ]
 
-function App() {
-  const [selectedType, setSelectedType] = useState('')
-  
-  function getMatchup(type) {
-  // API CALL WILL GO HERE, AND WE WILL RETURN THE RESPONSE
-  return `${type}-type Pokémon.`;
+function formatTypeNames(names) {
+  if (names.length < 2) return names[0] || 'no types'
+  if (names.length === 2) return `${names[0]} and ${names[1]}`
+  return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`
 }
 
-function handleTypeClick(type) {
-  setSelectedType(type)
-}
+function App() {
+  const [selectedType, setSelectedType] = useState('')
+  const [matchup, setMatchup] = useState(null)
+
+  async function getMatchup(type) {
+    try {
+      const response = await fetch(
+        `http://localhost:5001/api/type/${encodeURIComponent(type.toLowerCase())}`,
+      )
+
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Could not get type matchup:', error)
+      return { error: 'Could not load the type matchup. Is the backend running?' }
+    }
+  }
+
+  async function handleTypeClick(type) {
+    setSelectedType(type)
+    setMatchup(null)
+    setMatchup(await getMatchup(type))
+  }
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-amber-50 px-4 py-12 text-slate-800">
@@ -49,7 +70,23 @@ function handleTypeClick(type) {
           aria-live="polite"
           className={`mt-6 min-h-6 ${selectedType ? `text-base font-bold ${types.find(({ name }) => name === selectedType)?.color.split(' ')[1]}` : 'text-sm text-slate-500'}`}
         >
-          {selectedType ? getMatchup(selectedType) : 'Select a type to get started.'}
+          {!selectedType && 'Select a type to get started.'}
+          {selectedType && !matchup && 'Loading matchup…'}
+          {matchup?.error && matchup.error}
+          {matchup && !matchup.error && (
+            <span className="block space-y-1">
+              <span className="block">
+                {matchup.double_damage_from.length
+                  ? `${formatTypeNames(matchup.double_damage_from)} moves deal double damage to ${selectedType}.`
+                  : `${selectedType} has no listed weaknesses.`}
+              </span>
+              <span className="block">
+                {matchup.half_damage_to.length
+                  ? `${selectedType}-type moves deal half damage to ${formatTypeNames(matchup.half_damage_to)} Pokémon.`
+                  : `${selectedType}-type moves have no listed resistances.`}
+              </span>
+            </span>
+          )}
         </p>
       </section>
     </main>
