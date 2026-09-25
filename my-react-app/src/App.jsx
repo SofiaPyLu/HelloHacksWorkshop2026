@@ -13,12 +13,11 @@ function App() {
   
   function getMatchup(type) {
   // API CALL WILL GO HERE, AND WE WILL RETURN THE RESPONSE
-  return `Fake API response: You are fighting a ${type}-type Pokémon.`;
+  return `${type}-type Pokémon.`;
 }
 
 function handleTypeClick(type) {
-  const response = getMatchup(type);
-  setSelectedType(response);
+  setSelectedType(type)
 }
 
   return (
@@ -38,7 +37,7 @@ function handleTypeClick(type) {
               key={name}
               type="button"
               aria-pressed={selectedType === name}
-              onClick={() => handleTypeClick(type.name)}
+              onClick={() => handleTypeClick(name)}
               className={`rounded-xl px-4 py-3 font-semibold ring-1 ring-inset transition hover:-translate-y-0.5 hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500 ${color} ${selectedType === name ? 'selected-type' : ''}`}
             >
               {name}
@@ -46,8 +45,11 @@ function handleTypeClick(type) {
           ))}
         </div>
 
-        <p aria-live="polite" className="mt-6 min-h-6 text-sm text-slate-500">
-          {selectedType || 'Select a type to get started.'}
+        <p
+          aria-live="polite"
+          className={`mt-6 min-h-6 ${selectedType ? `text-base font-bold ${types.find(({ name }) => name === selectedType)?.color.split(' ')[1]}` : 'text-sm text-slate-500'}`}
+        >
+          {selectedType ? getMatchup(selectedType) : 'Select a type to get started.'}
         </p>
       </section>
     </main>
